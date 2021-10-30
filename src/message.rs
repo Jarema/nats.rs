@@ -55,12 +55,14 @@ impl From<crate::asynk::Message> for Message {
 #[derive(Debug, Clone)]
 pub enum MessageError {
     NoResponders,
+    NoMessages,
 }
 
 impl Display for MessageError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             MessageError::NoResponders => write!(f, "no responders"),
+            MessageError::NoMessages => write!(f, "no messages"),
         }
     }
 }

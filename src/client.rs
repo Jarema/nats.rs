@@ -745,6 +745,27 @@ impl Client {
                     }
                 }
 
+                ServerOp::NoMessages { subject, sid } => {
+                    let read = self.state.read.lock();
+
+                    // Send the message to matching subscription.
+                    if let Some(subscription) = read.subscriptions.get(&sid) {
+                        let msg = Message {
+                            subject,
+                            reply: None,
+                            data: Vec::new(),
+                            headers: None,
+                            client: self.clone(),
+                            double_acked: Default::default(),
+                            err: Some(MessageError::NoMessages),
+                        };
+
+                        // Send a message or drop it if the channel is
+                        // disconnected or full.
+                        subscription.messages.try_send(msg).ok();
+                    }
+                }
+
                 ServerOp::Err(msg) => {
                     return Err(Error::new(ErrorKind::Other, msg));
                 }

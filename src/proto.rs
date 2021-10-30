@@ -43,6 +43,10 @@ pub(crate) enum ServerOp {
         subject: String,
         sid: u64,
     },
+    NoMessages {
+        subject: String,
+        sid: u64,
+    },
     /// Unknown protocol message.
     Unknown(String),
 }
@@ -111,6 +115,8 @@ pub(crate) fn decode(mut stream: impl BufRead) -> io::Result<Option<ServerOp>> {
         .next()
         .unwrap_or("")
         .to_ascii_uppercase();
+
+    println!("line: {}", line);
 
     if op == "PING" {
         return Ok(Some(ServerOp::Ping));
@@ -264,11 +270,21 @@ pub(crate) fn decode(mut stream: impl BufRead) -> io::Result<Option<ServerOp>> {
         let mut header_payload = Vec::new();
         header_payload.resize(num_header_bytes as usize, 0_u8);
         stream.read_exact(&mut header_payload[..])?;
+        println!("server response: {}", str::from_utf8(&header_payload).unwrap());
 
         // check for 503 no responders
         if  let Ok(s) = str::from_utf8(&header_payload) {
             if s.trim().eq("NATS/1.0 503") {
                 return Ok(Some(ServerOp::NoResponders {
+                    subject,
+                    sid
+                }));
+            }
+        }
+        // check for 503 no responders
+        if  let Ok(s) = str::from_utf8(&header_payload) {
+            if s.trim().eq("NATS/1.0 404 No Messages") {
+                return Ok(Some(ServerOp::NoMessages {
                     subject,
                     sid
                 }));

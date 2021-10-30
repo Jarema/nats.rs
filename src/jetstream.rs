@@ -180,7 +180,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 pub use crate::jetstream_types::*;
 
-use crate::{Connection as NatsClient, Message};
+use crate::{Connection as NatsClient, Message, MessageError};
 
 /// `ApiResponse` is a standard response from the `JetStream` JSON Api
 #[derive(Debug, Serialize, Deserialize)]
@@ -937,11 +937,19 @@ impl Consumer {
         let ret_opt = self
             .pull_opt(NextRequest {
                 batch: 1,
+                no_wait: true,
                 ..Default::default()
             })?
-            .next();
+            .next_timeout();
+        self.
 
         if let Some(ret) = ret_opt {
+            if let Some(MessageError::NoMessages) = ret.err {
+                return Err(Error::new(
+                    ErrorKind::NotFound,
+                    "No messages",
+                ))
+            }
             Ok(ret)
         } else {
             Err(Error::new(
