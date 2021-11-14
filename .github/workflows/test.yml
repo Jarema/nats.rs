@@ -99,11 +99,10 @@ jobs:
             ${{ runner.os }}-
       - uses: actions/checkout@v2
       - name: fault injection test
-        env:
-          RUST_LOG: trace
-        run: |
-          rustup update
-          cargo test reconnect_test --features=fault_injection -- --ignored
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: reconnect_test --features=fault_injection -- --ignored
 
   doctests:
     name: doctests
