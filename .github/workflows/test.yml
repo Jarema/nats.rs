@@ -3,7 +3,7 @@ name: Rust
 on:
   push:
     branches:
-      - pipelines
+      - main
   pull_request:
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [stable, nightly, 1.52.0]
+        rust: [stable, 1.52.0]
     steps:
       - name: Cache Rust
         uses: actions/cache@v1
