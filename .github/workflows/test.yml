@@ -51,6 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [stable, nightly, 1.52.0]
     steps:
       - name: Cache Rust
         uses: actions/cache@v1
@@ -79,11 +80,10 @@ jobs:
       - name: install nats-server
         run: go get github.com/nats-io/nats-server/v2
       - name: cargo test
-        env:
-          RUST_BACKTRACE: 1
-        run: |
-          rustup update
-          cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args:
 
   fault-injection:
     name: Fault Injection
@@ -152,37 +152,10 @@ jobs:
       - name: install nats-server
         run: go get github.com/nats-io/nats-server/v2
       - name: JetStream test
-        env:
-          RUST_LOG: trace
-        run: |
-          rustup update
-          cargo check --examples
-
-  jetstream:
-    name: JetStream
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cache Rust
-        uses: actions/cache@v1
-        env:
-          cache-name: cache-rust-jetstream
+        uses: actions-rs/cargo@v1
         with:
-          path: target
-          key: ${{ runner.os }}-${{ env.cache-name }}
-          restore-keys: |
-            ${{ runner.os }}-
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: '1.16'
-      - name: install nats-server
-        run: go get github.com/nats-io/nats-server/v2
-      - name: JetStream test
-        env:
-          RUST_LOG: trace
-        run: |
-          rustup update
-          cargo test jetstream
+          command: check
+          args: --examples
 
   msrv:
     name: MSRV
