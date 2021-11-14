@@ -3,7 +3,7 @@ name: Rust
 on:
   push:
     branches:
-      - main
+      - pipelines
   pull_request:
 
 jobs:
