@@ -1,4 +1,4 @@
-name: Rust
+name: Nats.rs
 
 on:
   push:
@@ -51,6 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [stable]
     steps:
       - name: Cache Rust
         uses: actions/cache@v1
@@ -79,11 +80,9 @@ jobs:
       - name: install nats-server
         run: go get github.com/nats-io/nats-server/v2
       - name: cargo test
-        env:
-          RUST_BACKTRACE: 1
-        run: |
-          rustup update
-          cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
 
   fault-injection:
     name: Fault Injection
@@ -100,11 +99,10 @@ jobs:
             ${{ runner.os }}-
       - uses: actions/checkout@v2
       - name: fault injection test
-        env:
-          RUST_LOG: trace
-        run: |
-          rustup update
-          cargo test reconnect_test --features=fault_injection -- --ignored
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: reconnect_test --features=fault_injection -- --ignored
 
   doctests:
     name: doctests
@@ -125,12 +123,11 @@ jobs:
           go-version: '1.16'
       - name: install nats-server
         run: go get github.com/nats-io/nats-server/v2
-      - name: JetStream test
-        env:
-          RUST_LOG: trace
-        run: |
-          rustup update
-          cargo test --doc
+      - name: Docs test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --doc
 
   examples:
     name: examples
@@ -151,42 +148,18 @@ jobs:
           go-version: '1.16'
       - name: install nats-server
         run: go get github.com/nats-io/nats-server/v2
-      - name: JetStream test
-        env:
-          RUST_LOG: trace
-        run: |
-          rustup update
-          cargo check --examples
-
-  jetstream:
-    name: JetStream
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cache Rust
-        uses: actions/cache@v1
-        env:
-          cache-name: cache-rust-jetstream
+      - name: examples check
+        uses: actions-rs/cargo@v1
         with:
-          path: target
-          key: ${{ runner.os }}-${{ env.cache-name }}
-          restore-keys: |
-            ${{ runner.os }}-
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: '1.16'
-      - name: install nats-server
-        run: go get github.com/nats-io/nats-server/v2
-      - name: JetStream test
-        env:
-          RUST_LOG: trace
-        run: |
-          rustup update
-          cargo test jetstream
+          command: check
+          args: --examples
 
   msrv:
     name: MSRV
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable, 1.52.0]
     steps:
       - name: Cache Rust
         uses: actions/cache@v1
@@ -198,9 +171,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-
       - uses: actions/checkout@v1
-      - name: MSRV check
-        run: |
-          set -eo pipefail
-          echo "msrv check"
-          rustup install 1.52.0
-          cargo +1.52.0 check
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          override: true
+      - name: Check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
