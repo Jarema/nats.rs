@@ -1,4 +1,4 @@
-name: Rust
+name: Nats.rs
 
 on:
   push:
